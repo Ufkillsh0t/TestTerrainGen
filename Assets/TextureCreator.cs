@@ -25,7 +25,24 @@ public class TextureCreator : MonoBehaviour {
     }
 
     /// <summary>
-    /// Fills the textur....
+    /// Fills the texture....
+    /// </summary>
+    private void FillTexture()
+    {
+        float stepSize = 1f / resolution; // Number used to generate a certain color between 0f-1f foreach pixel.
+        for(int y = 0; y < resolution; y++) // For every y-axis till resolution
+        {
+            for(int x = 0; x < resolution; x++) // For every x-axis till resolution
+            {
+                texture.SetPixel(x, y, new Color(x * stepSize, y * stepSize, 0f)); //Displays a certain green/red color at a certain axis based on the stepSize.
+            }
+        }
+        texture.Apply(); // Applies the texture.
+    }
+
+    /*
+    /// <summary>
+    /// Fills the texture....
     /// </summary>
     private void FillTexture()
     {
@@ -38,4 +55,5 @@ public class TextureCreator : MonoBehaviour {
         }
         texture.Apply(); // Applies the texture.
     }
+    */
 }
