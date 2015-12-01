@@ -4,6 +4,7 @@ using System.Collections;
 public class TextureCreator : MonoBehaviour {
 
     // Resolution of the generated texture in width and height. (default 256x256)
+    [Range(2, 512)] //Set a minimum and maximum res for the texture.
     public int resolution = 256;
 
     // Unity texture class.
@@ -18,6 +19,10 @@ public class TextureCreator : MonoBehaviour {
         texture = new Texture2D(resolution, resolution, TextureFormat.RGB24, true);
         // Naming the texture for identification.
         texture.name = "Procedural Texture";
+        // Won't let unity repeat the texture multiple times which will make weird texture artifacts at lower texture resolutions.
+        texture.wrapMode = TextureWrapMode.Clamp;
+        // Unity's default texture filtering is bilinear that's why a low res texture will still look smooth. To create the real look we will use point filtering;
+        texture.filterMode = FilterMode.Point;
         // Grabbing the Meshrenderer of the Quad object so we can assing the new texture to the Quad object.
         GetComponent<MeshRenderer>().material.mainTexture = texture;
         // Fills the texture with the color Red.
@@ -27,8 +32,12 @@ public class TextureCreator : MonoBehaviour {
     /// <summary>
     /// Fills the texture....
     /// </summary>
-    private void FillTexture()
+    public void FillTexture()
     {
+        if(texture.width != resolution) // If the width of the texture isn't the same as the resolution resize the texture to the resolution.
+        {
+            texture.Resize(resolution, resolution);
+        }
         float stepSize = 1f / resolution; // Number used to generate a certain color between 0f-1f foreach pixel.
         for(int y = 0; y < resolution; y++) // For every y-axis till resolution
         {
