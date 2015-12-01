@@ -7,24 +7,41 @@ public class TextureCreator : MonoBehaviour {
     [Range(2, 512)] //Set a minimum and maximum res for the texture.
     public int resolution = 256;
 
+    //Noise frequency;
+    public float frequency = 1f;
+
     // Unity texture class.
     private Texture2D texture;
 
+
+    private void Update()
+    {
+        if (transform.hasChanged) // IF the quad is moved it changes the textures.
+        {
+            transform.hasChanged = false;
+            FillTexture();
+        }
+    }
 
 	// When the object awakes we will generate the texture. <-- Only works if the code recompiles
     // When the object gets enabled with OnEnable you can change the color while Unity is still running.
 	void OnEnable()
     {
-        // Assigning the texture variable to a new Texture2D object with RGB color and mipmapping.
-        texture = new Texture2D(resolution, resolution, TextureFormat.RGB24, true);
-        // Naming the texture for identification.
-        texture.name = "Procedural Texture";
-        // Won't let unity repeat the texture multiple times which will make weird texture artifacts at lower texture resolutions.
-        texture.wrapMode = TextureWrapMode.Clamp;
-        // Unity's default texture filtering is bilinear that's why a low res texture will still look smooth. To create the real look we will use point filtering;
-        texture.filterMode = FilterMode.Point;
-        // Grabbing the Meshrenderer of the Quad object so we can assing the new texture to the Quad object.
-        GetComponent<MeshRenderer>().material.mainTexture = texture;
+        if (texture == null)
+        {
+            // Assigning the texture variable to a new Texture2D object with RGB color and mipmapping.
+            texture = new Texture2D(resolution, resolution, TextureFormat.RGB24, true);
+            // Naming the texture for identification.
+            texture.name = "Procedural Texture";
+            // Won't let unity repeat the texture multiple times which will make weird texture artifacts at lower texture resolutions.
+            texture.wrapMode = TextureWrapMode.Clamp;
+            // Unity's default texture filtering is bilinear that's why a low res texture will still look smooth. To create the real look we will use point filtering;
+            texture.filterMode = FilterMode.Trilinear;
+            // Anisotropic filtering makes the texture look beter at angles.
+            texture.anisoLevel = 9;
+            // Grabbing the Meshrenderer of the Quad object so we can assing the new texture to the Quad object.
+            GetComponent<MeshRenderer>().material.mainTexture = texture;
+        }
         // Fills the texture with the color Red.
         FillTexture();
     }
@@ -38,12 +55,22 @@ public class TextureCreator : MonoBehaviour {
         {
             texture.Resize(resolution, resolution);
         }
+
+        Vector3 point00 = transform.TransformPoint(new Vector3(-0.5f, -0.5f));
+        Vector3 point10 = transform.TransformPoint(new Vector3(0.5f, -0.5f));
+        Vector3 point01 = transform.TransformPoint(new Vector3(-0.5f, 0.5f));
+        Vector3 point11 = transform.TransformPoint(new Vector3(0.5f, 0.5f));
+
         float stepSize = 1f / resolution; // Number used to generate a certain color between 0f-1f foreach pixel.
-        for(int y = 0; y < resolution; y++) // For every y-axis till resolution
+        for (int y = 0; y < resolution; y++) // For every y-axis till resolution
         {
-            for(int x = 0; x < resolution; x++) // For every x-axis till resolution
+            Vector3 point0 = Vector3.Lerp(point00, point01, (y + 0.5f) * stepSize); // interpolate between two points on the y-axis.
+            Vector3 point1 = Vector3.Lerp(point10, point11, (y + 0.5f) * stepSize); // interpolate between two points on the y-axis.
+
+            for (int x = 0; x < resolution; x++) // For every x-axis till resolution
             {
-                texture.SetPixel(x, y, new Color(x * stepSize, y * stepSize, 0f)); //Displays a certain green/red color at a certain axis based on the stepSize.
+                Vector3 point = Vector3.Lerp(point0, point1, (x + 0.5f) * stepSize); // interpolate between two points on the x-axis and y-axis.
+                texture.SetPixel(x, y, Color.white * Noise.Value(point, frequency)); //Displays a certain green/red color at a certain axis based on the stepSize.
             }
         }
         texture.Apply(); // Applies the texture.
