@@ -52,32 +52,32 @@ public class Noise : MonoBehaviour {
 
 	public static float Value1D (Vector3 point, float frequency)
     {
-        point *= frequency;
+        point *= frequency; //Zorgt voor de frequentie van een patroon.
         int i = Mathf.FloorToInt(point.x);
         i &= hashMask;
-        return hash[i] * (1f / hashMask);
+        return hash[i] * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 
     public static float Value2D(Vector3 point, float frequency)
     {
-        point *= frequency;
+        point *= frequency; //Zorgt voor de frequentie van een patroon.
         int ix = Mathf.FloorToInt(point.x);
         int iy = Mathf.FloorToInt(point.y);
         ix &= hashMask;
         iy &= hashMask;
         //Debug.Log(ix + "|" + iy + "|" + ((hash[ix] + iy) & hashMask) + "|" + (1f / hashMask));
-        return hash[hash[ix] + iy] * (1f / hashMask);
+        return hash[hash[ix] + iy] * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 
     public static float Value3D(Vector3 point, float frequency)
-    {
-        point *= frequency;
+    { 
+        point *= frequency; //Zorgt voor de frequentie van een patroon.
         int ix = Mathf.FloorToInt(point.x);
         int iy = Mathf.FloorToInt(point.y);
         int iz = Mathf.FloorToInt(point.z);
         ix &= hashMask;
         iy &= hashMask;
         iz &= hashMask;
-        return hash[hash[hash[ix] + iy] + iz] * (1f / hashMask);
+        return hash[hash[hash[ix] + iy] + iz] * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 }
