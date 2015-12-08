@@ -3,7 +3,14 @@ using System.Collections;
 
 public delegate float NoiseMethod(Vector3 point, float frequency);
 
-public class Noise : MonoBehaviour {
+public enum NoiseMethodType
+{
+    Value,
+    Perlin
+}
+
+public class Noise : MonoBehaviour
+{
 
     public static NoiseMethod[] valueMethods =
     {
@@ -11,6 +18,41 @@ public class Noise : MonoBehaviour {
         Value2D,
         Value3D
     };
+
+    public static NoiseMethod[] perlinMethods =
+    {
+        Perlin1D,
+        Perlin2D,
+        Perlin3D
+    };
+
+    public static NoiseMethod[][] noiseMethods =
+    {
+        valueMethods,
+        perlinMethods
+    };
+
+    private static Vector2[] gradients2D =
+    {
+        new Vector2(1f, 0f), //rechterkant
+        new Vector2(-1f, 0f), //linkerkant
+        new Vector2(0f, 1f), //bovenkant
+        new Vector2(0f, -1f), //onderkant
+        new Vector2(1f, 1f).normalized, 
+        new Vector2(-1f, 1f).normalized, 
+        new Vector2(1f, -1f).normalized, 
+        new Vector2(-1f, -1f).normalized 
+    };
+
+    private const int gradientsMask2D = 3;
+
+    private static float[] gradients1D = {
+        1f, -1f
+    };
+
+    private const int gradientsMask1D = 1;
+
+    private static float sqr2 = Mathf.Sqrt(2f);
 
     private static int[] hash = {
         151,160,137, 91, 90, 15,131, 13,201, 95, 96, 53,194,233,  7,225,
@@ -50,34 +92,194 @@ public class Noise : MonoBehaviour {
 
     private const int hashMask = 255;
 
-	public static float Value1D (Vector3 point, float frequency)
+    public static float Value1D(Vector3 point, float frequency)
     {
         point *= frequency; //Zorgt voor de frequentie van een patroon.
-        int i = Mathf.FloorToInt(point.x);
-        i &= hashMask;
-        return hash[i] * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
+        int i0 = Mathf.FloorToInt(point.x);
+        float t = point.x - i0;
+        i0 &= hashMask;
+        int i1 = i0 + 1;
+
+        int h0 = hash[i0];
+        int h1 = hash[i1];
+
+        t = Smooth(t);
+        return Mathf.Lerp(h0, h1, t) * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 
     public static float Value2D(Vector3 point, float frequency)
     {
         point *= frequency; //Zorgt voor de frequentie van een patroon.
-        int ix = Mathf.FloorToInt(point.x);
-        int iy = Mathf.FloorToInt(point.y);
-        ix &= hashMask;
-        iy &= hashMask;
+        int ix0 = Mathf.FloorToInt(point.x);
+        int iy0 = Mathf.FloorToInt(point.y);
+        float tx = point.x - ix0;
+        float ty = point.y - iy0;
+        ix0 &= hashMask;
+        iy0 &= hashMask;
+        int ix1 = ix0 + 1;
+        int iy1 = iy0 + 1;
         //Debug.Log(ix + "|" + iy + "|" + ((hash[ix] + iy) & hashMask) + "|" + (1f / hashMask));
-        return hash[hash[ix] + iy] * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
+
+        int h0 = hash[ix0];
+        int h1 = hash[ix1];
+        int h00 = hash[h0 + iy0];
+        int h10 = hash[h1 + iy0];
+        int h01 = hash[h0 + iy1];
+        int h11 = hash[h1 + iy1];
+
+        tx = Smooth(tx);
+        ty = Smooth(ty);
+
+        return Mathf.Lerp(
+                Mathf.Lerp(h00, h10, tx),
+                Mathf.Lerp(h01, h11, tx),
+                ty) * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 
     public static float Value3D(Vector3 point, float frequency)
-    { 
+    {
         point *= frequency; //Zorgt voor de frequentie van een patroon.
-        int ix = Mathf.FloorToInt(point.x);
-        int iy = Mathf.FloorToInt(point.y);
-        int iz = Mathf.FloorToInt(point.z);
-        ix &= hashMask;
-        iy &= hashMask;
-        iz &= hashMask;
-        return hash[hash[hash[ix] + iy] + iz] * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
+        int ix0 = Mathf.FloorToInt(point.x);
+        int iy0 = Mathf.FloorToInt(point.y);
+        int iz0 = Mathf.FloorToInt(point.z);
+        float tx = point.x - ix0;
+        float ty = point.y - iy0;
+        float tz = point.z - iz0;
+        ix0 &= hashMask;
+        iy0 &= hashMask;
+        iz0 &= hashMask;
+        int ix1 = ix0 + 1;
+        int iy1 = iy0 + 1;
+        int iz1 = iz0 + 1;
+
+        int h0 = hash[ix0];
+        int h1 = hash[ix1];
+        int h00 = hash[h0 + iy0];
+        int h10 = hash[h1 + iy0];
+        int h01 = hash[h0 + iy1];
+        int h11 = hash[h1 + iy1];
+        int h000 = hash[h00 + iz0];
+        int h100 = hash[h10 + iz0];
+        int h010 = hash[h01 + iz0];
+        int h110 = hash[h11 + iz0];
+        int h001 = hash[h00 + iz1];
+        int h101 = hash[h10 + iz1];
+        int h011 = hash[h01 + iz1];
+        int h111 = hash[h11 + iz1];
+
+        tx = Smooth(tx);
+        ty = Smooth(ty);
+        tz = Smooth(tz);
+
+        return Mathf.Lerp(
+            Mathf.Lerp(Mathf.Lerp(h000, h100, tx), Mathf.Lerp(h010, h110, tx), ty),
+            Mathf.Lerp(Mathf.Lerp(h001, h101, tx), Mathf.Lerp(h011, h111, tx), ty),
+            tz) * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
+    }
+
+    public static float Perlin1D(Vector3 point, float frequency)
+    {
+        point *= frequency; //Zorgt voor de frequentie van een patroon.
+        int i0 = Mathf.FloorToInt(point.x);
+        float t0 = point.x - i0;
+        float t1 = t0 - 1f;
+        i0 &= hashMask;
+        int i1 = i0 + 1;
+
+        float g0 = gradients1D[hash[i0] & gradientsMask1D];
+        float g1 = gradients1D[hash[i1] & gradientsMask1D];
+
+        float v0 = g0 * t0;
+        float v1 = g1 * t1;
+
+        float t = Smooth(t0);
+        return Mathf.Lerp(v0, v1, t) * 2f; //Retourneert een tintwaarde tussen de 0 en 255;
+    }
+
+    public static float Perlin2D(Vector3 point, float frequency)
+    {
+        point *= frequency; //Zorgt voor de frequentie van een patroon.
+        int ix0 = Mathf.FloorToInt(point.x);
+        int iy0 = Mathf.FloorToInt(point.y);
+        float tx0 = point.x - ix0;
+        float ty0 = point.y - iy0;
+        float tx1 = tx0 - 1f;
+        float ty1 = ty0 - 1f;
+        ix0 &= hashMask;
+        iy0 &= hashMask;
+        int ix1 = ix0 + 1;
+        int iy1 = iy0 + 1;
+        //Debug.Log(ix + "|" + iy + "|" + ((hash[ix] + iy) & hashMask) + "|" + (1f / hashMask));
+
+        int h0 = hash[ix0];
+        int h1 = hash[ix1];
+        Vector2 g00 = gradients2D[hash[h0 + iy0] & gradientsMask2D];
+        Vector2 g10 = gradients2D[hash[h1 + iy0] & gradientsMask2D];
+        Vector2 g01 = gradients2D[hash[h0 + iy1] & gradientsMask2D];
+        Vector2 g11 = gradients2D[hash[h1 + iy1] & gradientsMask2D];
+
+        float v00 = Dot(g00, tx0, ty0);
+        float v10 = Dot(g10, tx1, ty0);
+        float v01 = Dot(g01, tx0, ty1);
+        float v11 = Dot(g11, tx1, ty1);
+
+        float tx = Smooth(tx0);
+        float ty = Smooth(ty0);
+
+        return Mathf.Lerp(
+                Mathf.Lerp(v00, v10, tx),
+                Mathf.Lerp(v01, v11, tx),
+                ty) * sqr2; //Retourneert een tintwaarde tussen de 0 en 255;
+    }
+
+    public static float Perlin3D(Vector3 point, float frequency)
+    {
+        point *= frequency; //Zorgt voor de frequentie van een patroon.
+        int ix0 = Mathf.FloorToInt(point.x);
+        int iy0 = Mathf.FloorToInt(point.y);
+        int iz0 = Mathf.FloorToInt(point.z);
+        float tx = point.x - ix0;
+        float ty = point.y - iy0;
+        float tz = point.z - iz0;
+        ix0 &= hashMask;
+        iy0 &= hashMask;
+        iz0 &= hashMask;
+        int ix1 = ix0 + 1;
+        int iy1 = iy0 + 1;
+        int iz1 = iz0 + 1;
+
+        int h0 = hash[ix0];
+        int h1 = hash[ix1];
+        int h00 = hash[h0 + iy0];
+        int h10 = hash[h1 + iy0];
+        int h01 = hash[h0 + iy1];
+        int h11 = hash[h1 + iy1];
+        int h000 = hash[h00 + iz0];
+        int h100 = hash[h10 + iz0];
+        int h010 = hash[h01 + iz0];
+        int h110 = hash[h11 + iz0];
+        int h001 = hash[h00 + iz1];
+        int h101 = hash[h10 + iz1];
+        int h011 = hash[h01 + iz1];
+        int h111 = hash[h11 + iz1];
+
+        tx = Smooth(tx);
+        ty = Smooth(ty);
+        tz = Smooth(tz);
+
+        return Mathf.Lerp(
+            Mathf.Lerp(Mathf.Lerp(h000, h100, tx), Mathf.Lerp(h010, h110, tx), ty),
+            Mathf.Lerp(Mathf.Lerp(h001, h101, tx), Mathf.Lerp(h011, h111, tx), ty),
+            tz) * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
+    }
+
+    private static float Smooth(float t)
+    {
+        return t * t * t * (t * (t * 6f - 15f) + 10f);
+    }
+
+    private static float Dot(Vector2 g, float x, float y)
+    {
+        return g.x * x + g.y * y;
     }
 }

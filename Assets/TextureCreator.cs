@@ -13,6 +13,8 @@ public class TextureCreator : MonoBehaviour {
     //Noise frequency;
     public float frequency = 1f;
 
+    public NoiseMethodType type;
+
     // Unity texture class.
     private Texture2D texture;
 
@@ -59,12 +61,12 @@ public class TextureCreator : MonoBehaviour {
             texture.Resize(resolution, resolution);
         }
 
-        Vector3 point00 = transform.TransformPoint(new Vector3(-0.5f, -0.5f));
-        Vector3 point10 = transform.TransformPoint(new Vector3(0.5f, -0.5f));
-        Vector3 point01 = transform.TransformPoint(new Vector3(-0.5f, 0.5f));
-        Vector3 point11 = transform.TransformPoint(new Vector3(0.5f, 0.5f));
+        Vector3 point00 = transform.TransformPoint(new Vector3(-0.5f, -0.5f)); //midden linkeronderkant
+        Vector3 point10 = transform.TransformPoint(new Vector3(0.5f, -0.5f)); //midden rechteronderkant
+        Vector3 point01 = transform.TransformPoint(new Vector3(-0.5f, 0.5f)); //midden linkerbovenkant
+        Vector3 point11 = transform.TransformPoint(new Vector3(0.5f, 0.5f)); //midden rechterbovenkant
 
-        NoiseMethod method = Noise.valueMethods[dimension - 1]; //Welke noise methode er gebruikt moet worden.
+        NoiseMethod method = Noise.noiseMethods[(int)type][dimension - 1]; //Welke noise methode er gebruikt moet worden.
         float stepSize = 1f / resolution; // Number used to generate a certain color between 0f-1f foreach pixel.
         for (int y = 0; y < resolution; y++) // For every y-axis till resolution
         {
@@ -74,7 +76,12 @@ public class TextureCreator : MonoBehaviour {
             for (int x = 0; x < resolution; x++) // For every x-axis till resolution
             {
                 Vector3 point = Vector3.Lerp(point0, point1, (x + 0.5f) * stepSize); // interpolate between two points on the x-axis and y-axis.
-                texture.SetPixel(x, y, Color.white * method(point, frequency)); //Displays a certain color of white/grey/black depending on the noise method.
+                float sample = method(point, frequency); // Waarde die uit de Noise methodes komt.
+                if(type != NoiseMethodType.Value)
+                {
+                    sample = sample * 0.5f + 0.5f;
+                }
+                texture.SetPixel(x, y, Color.white * sample); //Displays a certain color of white/grey/black depending on the noise method.
             }
         }
         texture.Apply(); // Applies the texture.
