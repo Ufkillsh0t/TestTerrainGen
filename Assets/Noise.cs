@@ -52,6 +52,8 @@ public class Noise : MonoBehaviour
         new Vector3(0f, -1f, -1f)
     };
 
+    private const int gradientsMask3D = 15;
+
     private static Vector2[] gradients2D =
     {
         new Vector2(1f, 0f), //rechterkant
@@ -258,9 +260,12 @@ public class Noise : MonoBehaviour
         int ix0 = Mathf.FloorToInt(point.x);
         int iy0 = Mathf.FloorToInt(point.y);
         int iz0 = Mathf.FloorToInt(point.z);
-        float tx = point.x - ix0;
-        float ty = point.y - iy0;
-        float tz = point.z - iz0;
+        float tx0 = point.x - ix0;
+        float ty0 = point.y - iy0;
+        float tz0 = point.z - iz0;
+        float tx1 = tx0 - 1f;
+        float ty1 = ty0 - 1f;
+        float tz1 = tz0 - 1f;
         ix0 &= hashMask;
         iy0 &= hashMask;
         iz0 &= hashMask;
@@ -274,23 +279,32 @@ public class Noise : MonoBehaviour
         int h10 = hash[h1 + iy0];
         int h01 = hash[h0 + iy1];
         int h11 = hash[h1 + iy1];
-        int h000 = hash[h00 + iz0];
-        int h100 = hash[h10 + iz0];
-        int h010 = hash[h01 + iz0];
-        int h110 = hash[h11 + iz0];
-        int h001 = hash[h00 + iz1];
-        int h101 = hash[h10 + iz1];
-        int h011 = hash[h01 + iz1];
-        int h111 = hash[h11 + iz1];
+        Vector3 g000 = gradients3D[hash[h00 + iz0] & gradientsMask3D];
+        Vector3 g100 = gradients3D[hash[h10 + iz0] & gradientsMask3D];
+        Vector3 g010 = gradients3D[hash[h01 + iz0] & gradientsMask3D];
+        Vector3 g110 = gradients3D[hash[h11 + iz0] & gradientsMask3D];
+        Vector3 g001 = gradients3D[hash[h00 + iz1] & gradientsMask3D];
+        Vector3 g101 = gradients3D[hash[h10 + iz1] & gradientsMask3D];
+        Vector3 g011 = gradients3D[hash[h01 + iz1] & gradientsMask3D];
+        Vector3 g111 = gradients3D[hash[h11 + iz1] & gradientsMask3D];
 
-        tx = Smooth(tx);
-        ty = Smooth(ty);
-        tz = Smooth(tz);
+        float v000 = Dot(g000, tx0, ty0, tz0);
+        float v100 = Dot(g100, tx1, ty0, tz0);
+        float v010 = Dot(g010, tx0, ty1, tz0);
+        float v110 = Dot(g110, tx1, ty1, tz0);
+        float v001 = Dot(g001, tx0, ty0, tz1);
+        float v101 = Dot(g101, tx1, ty0, tz1);
+        float v011 = Dot(g011, tx0, ty1, tz1);
+        float v111 = Dot(g111, tx1, ty1, tz1);
+
+        float tx = Smooth(tx0);
+        float ty = Smooth(ty0);
+        float tz = Smooth(tz0);
 
         return Mathf.Lerp(
-            Mathf.Lerp(Mathf.Lerp(h000, h100, tx), Mathf.Lerp(h010, h110, tx), ty),
-            Mathf.Lerp(Mathf.Lerp(h001, h101, tx), Mathf.Lerp(h011, h111, tx), ty),
-            tz) * (1f / hashMask); //Retourneert een tintwaarde tussen de 0 en 255;
+            Mathf.Lerp(Mathf.Lerp(v000, v100, tx), Mathf.Lerp(v010, v110, tx), ty),
+            Mathf.Lerp(Mathf.Lerp(v001, v101, tx), Mathf.Lerp(v011, v111, tx), ty),
+            tz); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 
     private static float Smooth(float t)
@@ -301,5 +315,10 @@ public class Noise : MonoBehaviour
     private static float Dot(Vector2 g, float x, float y)
     {
         return g.x * x + g.y * y;
+    }
+
+    private static float Dot(Vector3 g, float x, float y, float z)
+    {
+        return g.x * x + g.y * y + g.z * z;
     }
 }
