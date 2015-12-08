@@ -32,16 +32,36 @@ public class Noise : MonoBehaviour
         perlinMethods
     };
 
+    private static Vector3[] gradients3D = {
+        new Vector3(1f, 1f, 0f),
+        new Vector3(-1f, 1f, 0f),
+        new Vector3(1f, -1f, 0f),
+        new Vector3(-1f, -1f, 0f),
+        new Vector3(1f, 0f, 1f),
+        new Vector3(-1f, 0f, 1f),
+        new Vector3(1f, 0f, -1f),
+        new Vector3(-1f, 0f, -1f),
+        new Vector3(0f, 1f, 1f),
+        new Vector3(0f, -1f, 1f),
+        new Vector3(0f, 1f, -1f),
+        new Vector3(0f, -1f, -1f),
+
+        new Vector3(1f, 1f, 0f),
+        new Vector3(-1f, 1f, 0f),
+        new Vector3(0f, -1f, 1f),
+        new Vector3(0f, -1f, -1f)
+    };
+
     private static Vector2[] gradients2D =
     {
         new Vector2(1f, 0f), //rechterkant
         new Vector2(-1f, 0f), //linkerkant
         new Vector2(0f, 1f), //bovenkant
         new Vector2(0f, -1f), //onderkant
-        new Vector2(1f, 1f).normalized, 
-        new Vector2(-1f, 1f).normalized, 
-        new Vector2(1f, -1f).normalized, 
-        new Vector2(-1f, -1f).normalized 
+        new Vector2(1f, 1f).normalized,
+        new Vector2(-1f, 1f).normalized,
+        new Vector2(1f, -1f).normalized,
+        new Vector2(-1f, -1f).normalized
     };
 
     private const int gradientsMask2D = 3;
