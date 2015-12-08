@@ -24,7 +24,7 @@ public class Noise : MonoBehaviour {
 
     private const int hashMask = 255;
 
-	public static float Value (Vector3 point, float frequency)
+	public static float Value1D (Vector3 point, float frequency)
     {
         point *= frequency;
         int i = Mathf.FloorToInt(point.x);
@@ -32,4 +32,13 @@ public class Noise : MonoBehaviour {
         return hash[i] * (1f / hashMask);
     }
 
+    public static float Value2D(Vector3 point, float frequency)
+    {
+        point *= frequency;
+        int ix = Mathf.FloorToInt(point.x);
+        int iy = Mathf.FloorToInt(point.y);
+        ix &= hashMask;
+        iy &= hashMask;
+        return hash[(hash[ix] + iy) & hashMask] * (1f / hashMask);
+    }
 }
