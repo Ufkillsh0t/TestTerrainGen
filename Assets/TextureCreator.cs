@@ -7,6 +7,9 @@ public class TextureCreator : MonoBehaviour {
     [Range(2, 512)] //Set a minimum and maximum res for the texture.
     public int resolution = 256;
 
+    [Range(1, 3)] //Set which dimension of noise you want to use.
+    public int dimension = 3;
+
     //Noise frequency;
     public float frequency = 1f;
 
@@ -61,6 +64,7 @@ public class TextureCreator : MonoBehaviour {
         Vector3 point01 = transform.TransformPoint(new Vector3(-0.5f, 0.5f));
         Vector3 point11 = transform.TransformPoint(new Vector3(0.5f, 0.5f));
 
+        NoiseMethod method = Noise.valueMethods[dimension - 1];
         float stepSize = 1f / resolution; // Number used to generate a certain color between 0f-1f foreach pixel.
         for (int y = 0; y < resolution; y++) // For every y-axis till resolution
         {
@@ -70,7 +74,7 @@ public class TextureCreator : MonoBehaviour {
             for (int x = 0; x < resolution; x++) // For every x-axis till resolution
             {
                 Vector3 point = Vector3.Lerp(point0, point1, (x + 0.5f) * stepSize); // interpolate between two points on the x-axis and y-axis.
-                texture.SetPixel(x, y, Color.white * Noise.Value2D(point, frequency)); //Displays a certain green/red color at a certain axis based on the stepSize.
+                texture.SetPixel(x, y, Color.white * method(point, frequency)); //Displays a certain green/red color at a certain axis based on the stepSize.
             }
         }
         texture.Apply(); // Applies the texture.
