@@ -307,6 +307,21 @@ public class Noise : MonoBehaviour
             tz); //Retourneert een tintwaarde tussen de 0 en 255;
     }
 
+    public static float Sum(NoiseMethod method, Vector3 point, float frequency, int octaves, float lacunarity, float persistence) //Combines two samples off noise.
+    {
+        float sum = method(point, frequency);
+        float amplitude = 1f;
+        float range = 1f;
+        for(int i = 1; i < octaves; i++)
+        {
+            frequency *= lacunarity;
+            amplitude *= persistence;
+            range += amplitude;
+            sum += method(point, frequency) * amplitude;
+        }
+        return sum / range;
+    }
+
     private static float Smooth(float t)
     {
         return t * t * t * (t * (t * 6f - 15f) + 10f);
